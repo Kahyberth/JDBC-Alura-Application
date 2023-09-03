@@ -1,7 +1,9 @@
 package com.alura.jdbc.controller;
 
 import com.alura.jdbc.factory.ConnectionFactory;
+import com.sun.source.tree.StatementTree;
 
+import javax.swing.plaf.nimbus.State;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,8 +41,43 @@ public class ProductoController {
 		return resultado;
 	}
 
-    public void guardar(Object producto) {
-		// TODO
+	public void guardar(Map<String, String> producto) throws SQLException {
+		Connection conex = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet resultSet = null;
+
+		try {
+			conex = new ConnectionFactory().recuperaConexion();
+			String query = "INSERT INTO PRODUCTO (nombre, descripcion, cantidad) VALUES (?, ?, ?)";
+			preparedStatement = conex.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			preparedStatement.setString(1, producto.get("NOMBRE"));
+			preparedStatement.setString(2, producto.get("DESCRIPCION"));
+			preparedStatement.setInt(3, Integer.parseInt(producto.get("CANTIDAD")));
+
+			int affectedRows = preparedStatement.executeUpdate();
+
+			if (affectedRows == 0) {
+				throw new SQLException("La inserción no tuvo éxito.");
+			}
+
+			resultSet = preparedStatement.getGeneratedKeys();
+			if (resultSet.next()) {
+				System.out.println(String.format("Fue insertado el producto de ID %d", resultSet.getInt(1)));
+			} else {
+				throw new SQLException("No se pudo obtener el ID generado.");
+			}
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+			if (preparedStatement != null) {
+				preparedStatement.close();
+			}
+			if (conex != null) {
+				conex.close();
+			}
+		}
 	}
 
 }
